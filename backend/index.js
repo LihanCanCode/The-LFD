@@ -7,6 +7,7 @@ const devicesRouter = require('./routes/devices');
 const usageRouter = require('./routes/usage');
 const { startSimulator } = require('../services/simulator');
 const { checkAlerts, getActiveAlerts } = require('../services/alerts');
+const { addUsage, getTotalKWh } = require('./services/usageStore');
 
 const app = express();
 app.use(cors());
@@ -41,7 +42,9 @@ startSimulator(io, devices);
 // --- SIMULATOR LOOP SUPPORT (Runs every 5 seconds) ---
 setInterval(() => {
   const currentTotalWatts = devices.reduce((sum, device) => sum + device.watts, 0);
-  io.emit('usageUpdate', { totalWatts: currentTotalWatts });
+  addUsage(currentTotalWatts, 5); // Accumulate 5 seconds of usage
+  
+  io.emit('usageUpdate', { totalWatts: currentTotalWatts, totalKWh: getTotalKWh() });
   io.emit('alertsUpdate', checkAlerts(devices));
 
 }, 5000);

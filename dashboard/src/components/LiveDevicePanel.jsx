@@ -35,7 +35,7 @@ export const LiveDevicePanel = ({ devices, onToggle }) => {
                 <div key={device.id} className="device-row">
                   <div className="device-row-info">
                     <DeviceIcon type={device.type} status={device.status} size={18} />
-                    {device.type.toUpperCase()} {device.id.split('-')[1]}
+                    {device.type.toUpperCase()} {device.id.split('-')[2] || device.id.split('-')[1]}
                   </div>
                   {renderToggle(device)}
                 </div>

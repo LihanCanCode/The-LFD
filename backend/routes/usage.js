@@ -1,5 +1,6 @@
 const express = require('express');
 const { devices } = require('../../data/seed');
+const { getTotalKWh } = require('../services/usageStore');
 
 const router = express.Router();
 
@@ -23,6 +24,7 @@ router.get('/usage', (req, res) => {
 
   res.json({
     totalWatts,
+    totalKWh: getTotalKWh(),
     roomBreakdown
   });
 });

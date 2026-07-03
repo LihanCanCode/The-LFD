@@ -10,19 +10,19 @@ export const OfficeFloorPlan = ({ devices, onToggle }) => {
     let top = '50%';
     let left = '50%';
     // Standardized positions for all rooms based on the background image fixtures
-    if (['fan-1', 'fan-3', 'fan-5'].includes(device.id)) {
+    if (['drawing-fan-1', 'work1-fan-1', 'work2-fan-1'].includes(device.id)) {
       // Top Fans
       top = '15%'; left = '50%';
-    } else if (['fan-2', 'fan-4', 'fan-6'].includes(device.id)) {
+    } else if (['drawing-fan-2', 'work1-fan-2', 'work2-fan-2'].includes(device.id)) {
       // Bottom Fans
       top = '52%'; left = '50%';
-    } else if (['light-1', 'light-4', 'light-7'].includes(device.id)) {
+    } else if (['drawing-light-1', 'work1-light-1', 'work2-light-1'].includes(device.id)) {
       // Top-Left Lights
       top = '13%'; left = '23%';
-    } else if (['light-2', 'light-5', 'light-8'].includes(device.id)) {
+    } else if (['drawing-light-2', 'work1-light-2', 'work2-light-2'].includes(device.id)) {
       // Top-Right Lights
       top = '13%'; left = '77%';
-    } else if (['light-3', 'light-6', 'light-9'].includes(device.id)) {
+    } else if (['drawing-light-3', 'work1-light-3', 'work2-light-3'].includes(device.id)) {
       // Bottom-Middle Lights
       top = '69%'; left = '50%';
     }
