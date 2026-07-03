@@ -24,4 +24,9 @@ function findDevice(id) {
   return devices.find((device) => device.id === id);
 }
 
-module.exports = { devices, findDevice };
+const dummyContacts = [
+  { name: "Nafisa Rahman", email: "nafisa.rahman@yahoo.com", phone: "+8801812345678" },
+  { name: "Tanvir Hossain", email: "tanvir.hossain@yahoo.com", phone: "+8801912345678" }
+];
+
+module.exports = { devices, findDevice, dummyContacts };

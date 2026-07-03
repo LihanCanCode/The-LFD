@@ -7,55 +7,78 @@ import { ActiveAlertsPanel } from './components/ActiveAlertsPanel';
 import { OfficeFloorPlan } from './components/OfficeFloorPlan';
 import { DiscordBotPanel } from './components/DiscordBotPanel';
 import { Zap } from 'lucide-react';
+import { io } from 'socket.io-client';
 
 const FAN_WATTS = 60;
 const LIGHT_WATTS = 15;
 
-const initialDevices = [
-  { id: 'fan-1', type: 'fan', room: 'Drawing Room', status: 'off', watts: 0 },
-  { id: 'fan-2', type: 'fan', room: 'Drawing Room', status: 'off', watts: 0 },
-  { id: 'light-1', type: 'light', room: 'Drawing Room', status: 'off', watts: 0 },
-  { id: 'light-2', type: 'light', room: 'Drawing Room', status: 'off', watts: 0 },
-  { id: 'light-3', type: 'light', room: 'Drawing Room', status: 'off', watts: 0 },
-  { id: 'fan-3', type: 'fan', room: 'Work Room 1', status: 'off', watts: 0 },
-  { id: 'fan-4', type: 'fan', room: 'Work Room 1', status: 'off', watts: 0 },
-  { id: 'light-4', type: 'light', room: 'Work Room 1', status: 'off', watts: 0 },
-  { id: 'light-5', type: 'light', room: 'Work Room 1', status: 'off', watts: 0 },
-  { id: 'light-6', type: 'light', room: 'Work Room 1', status: 'off', watts: 0 },
-  { id: 'fan-5', type: 'fan', room: 'Work Room 2', status: 'off', watts: 0 },
-  { id: 'fan-6', type: 'fan', room: 'Work Room 2', status: 'off', watts: 0 },
-  { id: 'light-7', type: 'light', room: 'Work Room 2', status: 'off', watts: 0 },
-  { id: 'light-8', type: 'light', room: 'Work Room 2', status: 'off', watts: 0 },
-  { id: 'light-9', type: 'light', room: 'Work Room 2', status: 'off', watts: 0 },
-];
-
 function App() {
-  const [devices, setDevices] = useState(initialDevices);
+  const [devices, setDevices] = useState([]);
   const [alerts, setAlerts] = useState([]);
   const [usage, setUsage] = useState({ totalKWh: 0, currentWatts: 0 });
 
-  const toggleDevice = (id) => {
-    setDevices(prev => prev.map(device => {
-      if (device.id === id) {
-        const newStatus = device.status === 'on' ? 'off' : 'on';
-        return {
-          ...device,
-          status: newStatus,
-          watts: newStatus === 'on' ? (device.type === 'fan' ? FAN_WATTS : LIGHT_WATTS) : 0
-        };
-      }
-      return device;
-    }));
-  };
-
   useEffect(() => {
-    // Calculate total usage locally for the simulation
-    const currentTotalWatts = devices.reduce((sum, d) => sum + d.watts, 0);
-    setUsage(prev => ({
-      ...prev,
-      currentWatts: currentTotalWatts,
-    }));
-  }, [devices]);
+    const socket = io('http://localhost:4000');
+
+    socket.on('initialData', (data) => {
+      setDevices(data);
+    });
+
+    socket.on('device-update', (updatedDevice) => {
+      setDevices((prev) =>
+        prev.map((d) => (d.id === updatedDevice.id ? updatedDevice : d))
+      );
+    });
+
+    socket.on('alertsUpdate', (data) => {
+      setAlerts(data);
+    });
+
+    socket.on('usageUpdate', (data) => {
+      setUsage((prev) => ({
+        ...prev,
+        currentWatts: data.totalWatts
+      }));
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
+  const toggleDevice = (id) => {
+    const device = devices.find((d) => d.id === id);
+    if (!device) return;
+
+    const nextStatus = device.status === 'on' ? 'off' : 'on';
+
+    // Optimistic UI update
+    setDevices((prev) =>
+      prev.map((d) => {
+        if (d.id === id) {
+          return {
+            ...d,
+            status: nextStatus,
+            watts: nextStatus === 'on' ? (d.type === 'fan' ? FAN_WATTS : LIGHT_WATTS) : 0
+          };
+        }
+        return d;
+      })
+    );
+
+    // Call override API
+    fetch('http://localhost:4000/devices/override', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id, status: nextStatus })
+    }).catch((err) => {
+      console.error('Error overriding device:', err);
+      // Revert if failed
+      setDevices((prev) => prev.map((d) => (d.id === id ? device : d)));
+    });
+  };
 
   return (
     <div className="app-container">
@@ -73,7 +96,7 @@ function App() {
             boxShadow: '0 0 10px rgba(52, 211, 153, 0.5)'
           }} />
           <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: '500' }}>
-            Simulation Active
+            Live Backend Connected
           </span>
         </div>
       </header>
