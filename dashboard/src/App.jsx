@@ -1,121 +1,97 @@
 import React, { useState, useEffect } from 'react';
-import { io } from 'socket.io-client';
-import { Zap, AlertTriangle, Wind, Lightbulb, Clock } from 'lucide-react';
 import './App.css';
 
-const SOCKET_SERVER_URL = 'http://localhost:3001';
+import { LiveDevicePanel } from './components/LiveDevicePanel';
+import { PowerConsumptionMeter } from './components/PowerConsumptionMeter';
+import { ActiveAlertsPanel } from './components/ActiveAlertsPanel';
+import { OfficeFloorPlan } from './components/OfficeFloorPlan';
+import { DiscordBotPanel } from './components/DiscordBotPanel';
+import { Zap } from 'lucide-react';
+
+const FAN_WATTS = 60;
+const LIGHT_WATTS = 15;
+
+const initialDevices = [
+  { id: 'fan-1', type: 'fan', room: 'Drawing Room', status: 'off', watts: 0 },
+  { id: 'fan-2', type: 'fan', room: 'Drawing Room', status: 'off', watts: 0 },
+  { id: 'light-1', type: 'light', room: 'Drawing Room', status: 'off', watts: 0 },
+  { id: 'light-2', type: 'light', room: 'Drawing Room', status: 'off', watts: 0 },
+  { id: 'light-3', type: 'light', room: 'Drawing Room', status: 'off', watts: 0 },
+  { id: 'fan-3', type: 'fan', room: 'Work Room 1', status: 'off', watts: 0 },
+  { id: 'fan-4', type: 'fan', room: 'Work Room 1', status: 'off', watts: 0 },
+  { id: 'light-4', type: 'light', room: 'Work Room 1', status: 'off', watts: 0 },
+  { id: 'light-5', type: 'light', room: 'Work Room 1', status: 'off', watts: 0 },
+  { id: 'light-6', type: 'light', room: 'Work Room 1', status: 'off', watts: 0 },
+  { id: 'fan-5', type: 'fan', room: 'Work Room 2', status: 'off', watts: 0 },
+  { id: 'fan-6', type: 'fan', room: 'Work Room 2', status: 'off', watts: 0 },
+  { id: 'light-7', type: 'light', room: 'Work Room 2', status: 'off', watts: 0 },
+  { id: 'light-8', type: 'light', room: 'Work Room 2', status: 'off', watts: 0 },
+  { id: 'light-9', type: 'light', room: 'Work Room 2', status: 'off', watts: 0 },
+];
 
 function App() {
-  const [devices, setDevices] = useState([]);
+  const [devices, setDevices] = useState(initialDevices);
   const [alerts, setAlerts] = useState([]);
-  const [totalUsage, setTotalUsage] = useState({ totalKWh: '0.0000', currentWatts: 0 });
-  const [isConnected, setIsConnected] = useState(false);
+  const [usage, setUsage] = useState({ totalKWh: 0, currentWatts: 0 });
+
+  const toggleDevice = (id) => {
+    setDevices(prev => prev.map(device => {
+      if (device.id === id) {
+        const newStatus = device.status === 'on' ? 'off' : 'on';
+        return {
+          ...device,
+          status: newStatus,
+          watts: newStatus === 'on' ? (device.type === 'fan' ? FAN_WATTS : LIGHT_WATTS) : 0
+        };
+      }
+      return device;
+    }));
+  };
 
   useEffect(() => {
-    const socket = io(SOCKET_SERVER_URL);
-
-    socket.on('connect', () => setIsConnected(true));
-    socket.on('disconnect', () => setIsConnected(false));
-
-    socket.on('initialData', (data) => setDevices(data));
-    socket.on('alertsUpdate', (data) => setAlerts(data));
-    socket.on('usageUpdate', (data) => setTotalUsage(data));
-    
-    socket.on('deviceUpdate', (updatedDevice) => {
-      setDevices(prev => prev.map(d => d.id === updatedDevice.id ? updatedDevice : d));
-    });
-
-    return () => socket.disconnect();
-  }, []);
-
-  // Group devices by room
-  const rooms = [...new Set(devices.map(d => d.room))];
+    // Calculate total usage locally for the simulation
+    const currentTotalWatts = devices.reduce((sum, d) => sum + d.watts, 0);
+    setUsage(prev => ({
+      ...prev,
+      currentWatts: currentTotalWatts,
+    }));
+  }, [devices]);
 
   return (
-    <div className="dashboard-container">
-      {/* HEADER */}
-      <header className="glass-header">
-        <div className="header-content">
-          <div>
-            <h1>LFD <span className="highlight">Command Center</span></h1>
-            <p className="status-indicator">
-              <span className={`dot ${isConnected ? 'online' : 'offline'}`}></span>
-              {isConnected ? 'System Online' : 'Connecting...'}
-            </p>
-          </div>
-          <div className="power-meter glass-panel">
-            <Zap className="power-icon" />
-            <div className="power-stats">
-              <span className="power-value">{totalUsage.currentWatts || 0} W</span>
-              <span className="power-label">Current Draw</span>
-            </div>
-            <div className="divider"></div>
-            <div className="power-stats">
-              <span className="power-value">{totalUsage.totalKWh} kWh</span>
-              <span className="power-label">Total Usage Today</span>
-            </div>
-          </div>
+    <div className="app-container">
+      <header className="header">
+        <div className="header-logos">
+          <Zap size={28} color="var(--accent-blue)" />
+          <span className="header-logo-text">TECHATHON ROVER SUMMIT</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ 
+            width: '10px', 
+            height: '10px', 
+            borderRadius: '50%', 
+            backgroundColor: '#34d399',
+            boxShadow: '0 0 10px rgba(52, 211, 153, 0.5)'
+          }} />
+          <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: '500' }}>
+            Simulation Active
+          </span>
         </div>
       </header>
 
-      <main className="dashboard-grid">
-        {/* ROOMS GRID */}
-        <section className="rooms-section">
-          <h2>Facility Control</h2>
-          <div className="rooms-grid">
-            {rooms.map(room => (
-              <div key={room} className="room-card glass-panel">
-                <h3>{room}</h3>
-                <div className="devices-grid">
-                  {devices.filter(d => d.room === room).map(device => (
-                    <DeviceCard key={device.id} device={device} />
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+      <div className="dashboard-grid">
+        <div className="col-1">
+          <PowerConsumptionMeter usage={usage} devices={devices} />
+          <DiscordBotPanel />
+        </div>
+        
+        <div className="col-2">
+          <LiveDevicePanel devices={devices} onToggle={toggleDevice} />
+          <ActiveAlertsPanel alerts={alerts} />
+        </div>
 
-        {/* ALERTS SECTION */}
-        <aside className="alerts-section glass-panel">
-          <div className="alerts-header">
-            <AlertTriangle className="alerts-icon" />
-            <h2>Active Alerts</h2>
-            <span className="alert-badge">{alerts.length}</span>
-          </div>
-          <div className="alerts-list">
-            {alerts.length === 0 ? (
-              <p className="no-alerts">All systems optimal.</p>
-            ) : (
-              alerts.map(alert => (
-                <div key={alert.id} className={`alert-card ${alert.type.toLowerCase()}`}>
-                  <p className="alert-message">{alert.message}</p>
-                  <span className="alert-time"><Clock size={12}/> {new Date(alert.timestamp).toLocaleTimeString()}</span>
-                </div>
-              ))
-            )}
-          </div>
-        </aside>
-      </main>
-    </div>
-  );
-}
-
-function DeviceCard({ device }) {
-  const isOn = device.status === 'on';
-  const Icon = device.type === 'fan' ? Wind : Lightbulb;
-  
-  return (
-    <div className={`device-card ${isOn ? 'on' : 'off'}`}>
-      <div className={`icon-container ${isOn ? 'glow' : ''}`}>
-        <Icon className={isOn && device.type === 'fan' ? 'spin' : ''} />
-      </div>
-      <div className="device-info">
-        <span className="device-name">{device.type} {device.id.split('-')[1]}</span>
-        <span className="device-watts">{isOn ? `${device.watts}W` : '0W'}</span>
-      </div>
-      <div className={`status-pill ${isOn ? 'active' : ''}`}>
-        {isOn ? 'ON' : 'OFF'}
+        <div className="col-3">
+          <OfficeFloorPlan devices={devices} onToggle={toggleDevice} />
+        </div>
       </div>
     </div>
   );
