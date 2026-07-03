@@ -1,122 +1,124 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
+import { Zap, AlertTriangle, Wind, Lightbulb, Clock } from 'lucide-react';
+import './App.css';
+
+const SOCKET_SERVER_URL = 'http://localhost:3001';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [devices, setDevices] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [totalUsage, setTotalUsage] = useState({ totalKWh: '0.0000', currentWatts: 0 });
+  const [isConnected, setIsConnected] = useState(false);
+
+  useEffect(() => {
+    const socket = io(SOCKET_SERVER_URL);
+
+    socket.on('connect', () => setIsConnected(true));
+    socket.on('disconnect', () => setIsConnected(false));
+
+    socket.on('initialData', (data) => setDevices(data));
+    socket.on('alertsUpdate', (data) => setAlerts(data));
+    socket.on('usageUpdate', (data) => setTotalUsage(data));
+    
+    socket.on('deviceUpdate', (updatedDevice) => {
+      setDevices(prev => prev.map(d => d.id === updatedDevice.id ? updatedDevice : d));
+    });
+
+    return () => socket.disconnect();
+  }, []);
+
+  // Group devices by room
+  const rooms = [...new Set(devices.map(d => d.room))];
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="dashboard-container">
+      {/* HEADER */}
+      <header className="glass-header">
+        <div className="header-content">
+          <div>
+            <h1>LFD <span className="highlight">Command Center</span></h1>
+            <p className="status-indicator">
+              <span className={`dot ${isConnected ? 'online' : 'offline'}`}></span>
+              {isConnected ? 'System Online' : 'Connecting...'}
+            </p>
+          </div>
+          <div className="power-meter glass-panel">
+            <Zap className="power-icon" />
+            <div className="power-stats">
+              <span className="power-value">{totalUsage.currentWatts || 0} W</span>
+              <span className="power-label">Current Draw</span>
+            </div>
+            <div className="divider"></div>
+            <div className="power-stats">
+              <span className="power-value">{totalUsage.totalKWh} kWh</span>
+              <span className="power-label">Total Usage Today</span>
+            </div>
+          </div>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      </header>
 
-      <div className="ticks"></div>
+      <main className="dashboard-grid">
+        {/* ROOMS GRID */}
+        <section className="rooms-section">
+          <h2>Facility Control</h2>
+          <div className="rooms-grid">
+            {rooms.map(room => (
+              <div key={room} className="room-card glass-panel">
+                <h3>{room}</h3>
+                <div className="devices-grid">
+                  {devices.filter(d => d.room === room).map(device => (
+                    <DeviceCard key={device.id} device={device} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        {/* ALERTS SECTION */}
+        <aside className="alerts-section glass-panel">
+          <div className="alerts-header">
+            <AlertTriangle className="alerts-icon" />
+            <h2>Active Alerts</h2>
+            <span className="alert-badge">{alerts.length}</span>
+          </div>
+          <div className="alerts-list">
+            {alerts.length === 0 ? (
+              <p className="no-alerts">All systems optimal.</p>
+            ) : (
+              alerts.map(alert => (
+                <div key={alert.id} className={`alert-card ${alert.type.toLowerCase()}`}>
+                  <p className="alert-message">{alert.message}</p>
+                  <span className="alert-time"><Clock size={12}/> {new Date(alert.timestamp).toLocaleTimeString()}</span>
+                </div>
+              ))
+            )}
+          </div>
+        </aside>
+      </main>
+    </div>
+  );
 }
 
-export default App
+function DeviceCard({ device }) {
+  const isOn = device.status === 'on';
+  const Icon = device.type === 'fan' ? Wind : Lightbulb;
+  
+  return (
+    <div className={`device-card ${isOn ? 'on' : 'off'}`}>
+      <div className={`icon-container ${isOn ? 'glow' : ''}`}>
+        <Icon className={isOn && device.type === 'fan' ? 'spin' : ''} />
+      </div>
+      <div className="device-info">
+        <span className="device-name">{device.type} {device.id.split('-')[1]}</span>
+        <span className="device-watts">{isOn ? `${device.watts}W` : '0W'}</span>
+      </div>
+      <div className={`status-pill ${isOn ? 'active' : ''}`}>
+        {isOn ? 'ON' : 'OFF'}
+      </div>
+    </div>
+  );
+}
+
+export default App;
