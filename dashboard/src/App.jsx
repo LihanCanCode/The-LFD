@@ -1,122 +1,100 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import React, { useState, useEffect } from 'react';
+import './App.css';
+
+import { LiveDevicePanel } from './components/LiveDevicePanel';
+import { PowerConsumptionMeter } from './components/PowerConsumptionMeter';
+import { ActiveAlertsPanel } from './components/ActiveAlertsPanel';
+import { OfficeFloorPlan } from './components/OfficeFloorPlan';
+import { DiscordBotPanel } from './components/DiscordBotPanel';
+import { Zap } from 'lucide-react';
+
+const FAN_WATTS = 60;
+const LIGHT_WATTS = 15;
+
+const initialDevices = [
+  { id: 'fan-1', type: 'fan', room: 'Drawing Room', status: 'off', watts: 0 },
+  { id: 'fan-2', type: 'fan', room: 'Drawing Room', status: 'off', watts: 0 },
+  { id: 'light-1', type: 'light', room: 'Drawing Room', status: 'off', watts: 0 },
+  { id: 'light-2', type: 'light', room: 'Drawing Room', status: 'off', watts: 0 },
+  { id: 'light-3', type: 'light', room: 'Drawing Room', status: 'off', watts: 0 },
+  { id: 'fan-3', type: 'fan', room: 'Work Room 1', status: 'off', watts: 0 },
+  { id: 'fan-4', type: 'fan', room: 'Work Room 1', status: 'off', watts: 0 },
+  { id: 'light-4', type: 'light', room: 'Work Room 1', status: 'off', watts: 0 },
+  { id: 'light-5', type: 'light', room: 'Work Room 1', status: 'off', watts: 0 },
+  { id: 'light-6', type: 'light', room: 'Work Room 1', status: 'off', watts: 0 },
+  { id: 'fan-5', type: 'fan', room: 'Work Room 2', status: 'off', watts: 0 },
+  { id: 'fan-6', type: 'fan', room: 'Work Room 2', status: 'off', watts: 0 },
+  { id: 'light-7', type: 'light', room: 'Work Room 2', status: 'off', watts: 0 },
+  { id: 'light-8', type: 'light', room: 'Work Room 2', status: 'off', watts: 0 },
+  { id: 'light-9', type: 'light', room: 'Work Room 2', status: 'off', watts: 0 },
+];
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [devices, setDevices] = useState(initialDevices);
+  const [alerts, setAlerts] = useState([]);
+  const [usage, setUsage] = useState({ totalKWh: 0, currentWatts: 0 });
+
+  const toggleDevice = (id) => {
+    setDevices(prev => prev.map(device => {
+      if (device.id === id) {
+        const newStatus = device.status === 'on' ? 'off' : 'on';
+        return {
+          ...device,
+          status: newStatus,
+          watts: newStatus === 'on' ? (device.type === 'fan' ? FAN_WATTS : LIGHT_WATTS) : 0
+        };
+      }
+      return device;
+    }));
+  };
+
+  useEffect(() => {
+    // Calculate total usage locally for the simulation
+    const currentTotalWatts = devices.reduce((sum, d) => sum + d.watts, 0);
+    setUsage(prev => ({
+      ...prev,
+      currentWatts: currentTotalWatts,
+    }));
+  }, [devices]);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="app-container">
+      <header className="header">
+        <div className="header-logos">
+          <Zap size={28} color="var(--accent-blue)" />
+          <span className="header-logo-text">TECHATHON ROVER SUMMIT</span>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ 
+            width: '10px', 
+            height: '10px', 
+            borderRadius: '50%', 
+            backgroundColor: '#34d399',
+            boxShadow: '0 0 10px rgba(52, 211, 153, 0.5)'
+          }} />
+          <span style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: '500' }}>
+            Simulation Active
+          </span>
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+      </header>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      <div className="dashboard-grid">
+        <div className="col-1">
+          <PowerConsumptionMeter usage={usage} devices={devices} />
+          <DiscordBotPanel />
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
+        
+        <div className="col-2">
+          <LiveDevicePanel devices={devices} onToggle={toggleDevice} />
+          <ActiveAlertsPanel alerts={alerts} />
         </div>
-      </section>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+        <div className="col-3">
+          <OfficeFloorPlan devices={devices} onToggle={toggleDevice} />
+        </div>
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;
