@@ -66,16 +66,16 @@ graph TD
 
     %% Bot Connections
     DC <-->|Discord JS API| DB
-    DB -->|GET /devices, /usage| API
-    DB <-->|Proactive Polling (Every 10s)| API
+    DB -->|"GET /devices, /usage"| API
+    DB <-->|"Proactive Polling (Every 10s)"| API
 
     %% UI Connections
-    UI <-->|WebSockets (Live Sync)| WS
-    UI -->|POST /devices/override| API
+    UI <-->|"WebSockets (Live Sync)"| WS
+    UI -->|"POST /devices/override"| API
 
     %% Internal Backend
     API <--> DB_Mock
-    SIM -->|Updates State (Tick)| DB_Mock
+    SIM -->|"Updates State (Tick)"| DB_Mock
     SIM -->|Triggers Broadcast| WS
     ALT -->|Validates State| DB_Mock
     ALT -->|Pushes Alerts| WS
