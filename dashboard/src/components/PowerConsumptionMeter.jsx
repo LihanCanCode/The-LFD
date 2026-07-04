@@ -6,7 +6,9 @@ export const PowerConsumptionMeter = ({ usage, devices }) => {
   // Calculate power usage per room
   const roomPower = devices.reduce((acc, device) => {
     if (!acc[device.room]) acc[device.room] = 0;
-    acc[device.room] += device.watts || 0;
+    if (device.status === 'on') {
+      acc[device.room] += device.watts || 0;
+    }
     return acc;
   }, {});
 

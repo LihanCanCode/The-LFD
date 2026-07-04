@@ -45,41 +45,21 @@ Our system is engineered as a modern, event-driven microservices architecture. I
 
 ### Architectural Diagram
 
-```mermaid
-graph TD
-    subgraph Discord Ecosystem
-        DB[Discord.js Bot Server]
-        DC[Discord Guild Channels]
-    end
+- **Discord Ecosystem**
+  - **Discord.js Bot Server**: Processes chat commands and proactively pushes alerts.
+  - **Discord Guild Channels**: Where users receive notifications and send commands.
+  - *Connection*: Communicates via the Discord JS API.
 
-    subgraph Node.js Backend Service
-        API[Express REST API]
-        WS[Socket.IO Pub/Sub Server]
-        SIM[IoT Device Simulator]
-        ALT[Alerts Engine]
-        DB_Mock[(In-Memory State & Usage Store)]
-    end
+- **Node.js Backend Service**
+  - **Express REST API**: Serves endpoints for device state (`/devices`) and overrides (`/devices/override`).
+  - **Socket.IO Pub/Sub Server**: Streams real-time state changes to connected web clients.
+  - **IoT Device Simulator**: Periodically changes device states to simulate an active environment.
+  - **Alerts Engine**: Checks active device timestamps against rules (overtime, after hours).
+  - **In-Memory State**: Centralized cache tracking the current status and energy usage.
 
-    subgraph React Client Application
-        UI[Vite React Dashboard]
-    end
-
-    %% Bot Connections
-    DC <-->|Discord JS API| DB
-    DB -->|"GET /devices, /usage"| API
-    DB <-->|"Proactive Polling (Every 10s)"| API
-
-    %% UI Connections
-    UI <-->|"WebSockets (Live Sync)"| WS
-    UI -->|"POST /devices/override"| API
-
-    %% Internal Backend
-    API <--> DB_Mock
-    SIM -->|"Updates State (Tick)"| DB_Mock
-    SIM -->|Triggers Broadcast| WS
-    ALT -->|Validates State| DB_Mock
-    ALT -->|Pushes Alerts| WS
-```
+- **React Client Application (Dashboard)**
+  - **Vite React Dashboard**: Visualizes the floor plan and power meter.
+  - *Connection*: Listens to WebSockets for live sync, and hits REST API to override devices.
 
 ### Design Decisions & Patterns
 1. **Event-Driven Synchronization**: The `Node.js` backend acts as the single source of truth. Rather than the React client polling for data, the backend utilizes a `Socket.io` Pub/Sub model to push state changes (`device-update`, `usageUpdate`, `alertsUpdate`) instantly to all connected clients.

@@ -23,8 +23,11 @@ router.get('/devices', (req, res) => {
 router.get('/devices/:room', (req, res) => {
   const requestedRoom = normalizeRoomParam(req.params.room);
 
+  const requestedRoomSlug = requestedRoom.replace(/\s/g, '');
+
   const filteredDevices = devices.filter((device) => {
-    return device.room.toLowerCase() === requestedRoom;
+    const deviceRoomSlug = device.room.toLowerCase().replace(/\s/g, '');
+    return deviceRoomSlug.includes(requestedRoomSlug);
   });
 
   res.json(filteredDevices);
