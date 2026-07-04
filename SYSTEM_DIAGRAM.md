@@ -2,6 +2,8 @@
 
 This diagram illustrates the full, event-driven microservices architecture of the **Lights, Fans, Discord (LFD)** platform. It shows how the Frontend, Backend, Discord Bot, and physical Hardware (ESP32) integrate in real-time.
 
+![System Design Diagram](./dashboard/public/system_design_diagram.jpeg)
+
 ```mermaid
 flowchart TD
     %% Define Styles

@@ -1,4 +1,3 @@
-// ============================================================
 // Office Device Monitor - ESP32 Firmware
 // Room: Work Room 1 (Fan1, Fan2, Light1, Light2, Light3)
 //
@@ -7,17 +6,17 @@
 // Set DEMO_MODE to false for real-hardware use with a calibrated INA219.
 // ============================================================
 
-#include <WiFi.h>
-#include <HTTPClient.h>
-#include <ArduinoJson.h>
-#include <Wire.h>
 #include <Adafruit_INA219.h>
+#include <ArduinoJson.h>
+#include <HTTPClient.h>
+#include <WiFi.h>
+#include <Wire.h>
 
 // ---------- CONFIG ----------
-const char* WIFI_SSID = "Wokwi-GUEST";
-const char* WIFI_PASSWORD = "";
-const char* BACKEND_URL = "http://host.wokwi.internal:4000/api/devices/report";
-const char* ROOM_ID = "work_room_1";
+const char *WIFI_SSID = "Wokwi-GUEST";
+const char *WIFI_PASSWORD = "";
+const char *BACKEND_URL = "http://host.wokwi.internal:4000/api/devices/report";
+const char *ROOM_ID = "work_room_1";
 const unsigned long REPORT_INTERVAL_MS = 5000;
 
 const bool DEMO_MODE = true;
@@ -29,8 +28,8 @@ const unsigned long WIFI_CONNECT_TIMEOUT_MS = 15000;
 // ---------- PIN MAP ----------
 const int RELAY_PINS[5] = {16, 17, 18, 19, 21};
 const int LED_PINS[5] = {22, 23, 25, 26, 27};
-const char* DEVICE_IDS[5] = {"fan1", "fan2", "light1", "light2", "light3"};
-const char* DEVICE_TYPES[5] = {"fan", "fan", "light", "light", "light"};
+const char *DEVICE_IDS[5] = {"fan1", "fan2", "light1", "light2", "light3"};
+const char *DEVICE_TYPES[5] = {"fan", "fan", "light", "light", "light"};
 const float RATED_WATTS[5] = {60.0, 60.0, 15.0, 15.0, 15.0};
 
 const int BUTTON_PIN = 32;
@@ -168,8 +167,8 @@ void reportState() {
       if (responseDoc.containsKey("commands")) {
         JsonArray commands = responseDoc["commands"].as<JsonArray>();
         for (JsonObject cmd : commands) {
-          const char* cmdId = cmd["id"];
-          const char* cmdStatus = cmd["status"];
+          const char *cmdId = cmd["id"];
+          const char *cmdStatus = cmd["status"];
           if (cmdId && cmdStatus) {
             bool turnOn = (strcmp(cmdStatus, "on") == 0);
             for (int i = 0; i < 5; i++) {
@@ -197,7 +196,8 @@ void handleButton() {
     lastButtonReading = reading;
   }
 
-  if ((millis() - lastButtonChangeMs) > BUTTON_DEBOUNCE_MS && reading != buttonStableState) {
+  if ((millis() - lastButtonChangeMs) > BUTTON_DEBOUNCE_MS &&
+      reading != buttonStableState) {
     buttonStableState = reading;
     if (buttonStableState == LOW) {
       setDevice(0, !deviceState[0]);
@@ -239,7 +239,8 @@ void setup() {
   }
 
   if (!connectWiFi(8000)) {
-    Serial.println("Continuing in offline mode so local button tests still work");
+    Serial.println(
+        "Continuing in offline mode so local button tests still work");
   }
 }
 

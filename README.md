@@ -45,6 +45,8 @@ Our system is engineered as a modern, event-driven microservices architecture. I
 
 ### Architectural Diagram
 
+![System Design Diagram](./dashboard/public/system_design_diagram.jpeg)
+
 - **Discord Ecosystem**
   - **Discord.js Bot Server**: Processes chat commands and proactively pushes alerts.
   - **Discord Guild Channels**: Where users receive notifications and send commands.
