@@ -1,0 +1,5 @@
+profiles:
+  default:
+    fqbn: esp32:esp32:esp32
+
+default_profile: default
